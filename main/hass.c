@@ -87,6 +87,18 @@ static void cb_ws_event(void *arg_evh, esp_event_base_t *base_ev, int32_t id_ev,
                     }
                 }
 
+                bool answer = false;
+                cJSON *speech2 = NULL;
+
+                if (strcmp(response_type->valuestring, "query_answer") == 0) {
+                    cJSON *speech = cJSON_GetObjectItemCaseSensitive(response, "speech");
+                    cJSON *plain = cJSON_GetObjectItemCaseSensitive(speech, "plain");
+                    speech2 = cJSON_GetObjectItemCaseSensitive(plain, "speech");
+                    if (cJSON_IsString(speech2) && speech2->valuestring != NULL) {
+                        answer = true;
+                    }
+                }
+
                 json = cJSON_Print(cjson);
                 ESP_LOGI(TAG, "received intent-end event on WebSocket: %s", json);
 
@@ -94,9 +106,14 @@ static void cb_ws_event(void *arg_evh, esp_event_base_t *base_ev, int32_t id_ev,
                 lv_obj_clear_flag(lbl_ln3, LV_OBJ_FLAG_HIDDEN);
                 lv_obj_clear_flag(lbl_ln4, LV_OBJ_FLAG_HIDDEN);
                 lv_obj_align(lbl_ln3, LV_ALIGN_TOP_LEFT, 0, 120);
-                lv_label_set_text_static(lbl_ln3, "Command status:");
                 lv_obj_remove_event_cb(lbl_ln3, cb_btn_cancel);
-                lv_label_set_text(lbl_ln4, ok ? "#008000 Success!" : "#ff0000 No Matching HA Intent");
+                if (answer) {
+                    lv_label_set_text_static(lbl_ln3, "Response:");
+                    lv_label_set_text(lbl_ln4, speech2->valuestring);
+                } else {
+                    lv_label_set_text_static(lbl_ln3, "Command status:");
+                    lv_label_set_text(lbl_ln4, ok ? "#008000 Success!" : "#ff0000 No Matching HA Intent");
+                }
                 lvgl_port_unlock();
 
                 timer_start(TIMER_GROUP_0, TIMER_0);
