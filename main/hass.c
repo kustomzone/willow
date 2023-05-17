@@ -144,6 +144,7 @@ static void init_hass_ws_client(void)
     ESP_LOGI(TAG, "WS URL: %s", url);
 
     const esp_websocket_client_config_t cfg_wc = {
+        .buffer_size = 8192,
         .path = HASS_URI_WEBSOCKET,
         .uri = url,
     };
